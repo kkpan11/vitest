@@ -25,8 +25,6 @@ import { cleanUrl } from 'vite-node/utils'
 import type { EncodedSourceMap, FetchResult } from 'vite-node'
 import {
   coverageConfigDefaults,
-  defaultExclude,
-  defaultInclude,
 } from 'vitest/config'
 import { BaseCoverageProvider } from 'vitest/coverage'
 import type {
@@ -126,11 +124,8 @@ export class V8CoverageProvider
 
     this.testExclude = new _TestExclude({
       cwd: ctx.config.root,
-      include:
-        typeof this.options.include === 'undefined'
-          ? undefined
-          : [...this.options.include],
-      exclude: [...defaultExclude, ...defaultInclude, ...this.options.exclude],
+      include: this.options.include,
+      exclude: this.options.exclude,
       excludeNodeModules: true,
       extension: this.options.extension,
       relativePath: !this.options.allowExternal,
@@ -448,11 +443,11 @@ export class V8CoverageProvider
     transformResults: TransformResults,
     functions: Profiler.FunctionCoverage[] = [],
   ): Promise<{
-    source: string
-    originalSource: string
-    sourceMap?: { sourcemap: EncodedSourceMap }
-    isExecuted: boolean
-  }> {
+      source: string
+      originalSource: string
+      sourceMap?: { sourcemap: EncodedSourceMap }
+      isExecuted: boolean
+    }> {
     const filePath = normalize(fileURLToPath(url))
 
     let isExecuted = true
