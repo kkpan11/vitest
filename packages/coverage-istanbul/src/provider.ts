@@ -16,6 +16,7 @@ import { resolve } from 'pathe'
 import TestExclude from 'test-exclude'
 import c from 'tinyrainbow'
 import { BaseCoverageProvider } from 'vitest/coverage'
+import { isCSSRequest } from 'vitest/node'
 
 import { version } from '../package.json' with { type: 'json' }
 import { COVERAGE_STORE_KEY } from './constants'
@@ -64,7 +65,7 @@ export class IstanbulCoverageProvider extends BaseCoverageProvider<ResolvedCover
     // Istanbul/babel cannot instrument CSS - e.g. Vue imports end up here.
     // File extension itself is .vue, but it contains CSS.
     // e.g. "Example.vue?vue&type=style&index=0&scoped=f7f04e08&lang.css"
-    if (id.endsWith('.css')) {
+    if (isCSSRequest(id)) {
       return
     }
 
@@ -75,11 +76,12 @@ export class IstanbulCoverageProvider extends BaseCoverageProvider<ResolvedCover
     const sourceMap = pluginCtx.getCombinedSourcemap()
     sourceMap.sources = sourceMap.sources.map(removeQueryParameters)
 
-    // Exclude SWC's decorators that are left in source maps
-    sourceCode = sourceCode.replaceAll(
-      '_ts_decorate',
-      '/* istanbul ignore next */_ts_decorate',
-    )
+    sourceCode = sourceCode
+      // Exclude SWC's decorators that are left in source maps
+      .replaceAll('_ts_decorate', '/* istanbul ignore next */_ts_decorate')
+
+      // Exclude in-source test's test cases
+      .replaceAll(/(if +\(import\.meta\.vitest\))/g, '/* istanbul ignore next */ $1')
 
     const code = this.instrumenter.instrumentSync(
       sourceCode,
