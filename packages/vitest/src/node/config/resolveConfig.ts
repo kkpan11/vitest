@@ -457,6 +457,11 @@ export function resolveConfig(
     resolved.runner = resolvePath(resolved.runner, resolved.root)
   }
 
+  resolved.attachmentsDir = resolve(
+    resolved.root,
+    resolved.attachmentsDir ?? '.vitest-attachments',
+  )
+
   if (resolved.snapshotEnvironment) {
     resolved.snapshotEnvironment = resolvePath(
       resolved.snapshotEnvironment,
@@ -591,13 +596,7 @@ export function resolveConfig(
     resolved.pool = resolvePath(resolved.pool, resolved.root)
   }
   if (resolved.poolMatchGlobs) {
-    logger.warn(
-      c.yellow(
-        `${c.inverse(
-          c.yellow(' Vitest '),
-        )} "poolMatchGlobs" is deprecated. Use "workspace" to define different configurations instead.`,
-      ),
-    )
+    logger.deprecate('`poolMatchGlobs` is deprecated. Use `test.projects` to define different configurations instead.')
   }
   resolved.poolMatchGlobs = (resolved.poolMatchGlobs || []).map(
     ([glob, pool]) => {
@@ -780,13 +779,7 @@ export function resolveConfig(
   }
 
   if (resolved.environmentMatchGlobs) {
-    logger.warn(
-      c.yellow(
-        `${c.inverse(
-          c.yellow(' Vitest '),
-        )} "environmentMatchGlobs" is deprecated. Use "workspace" to define different configurations instead.`,
-      ),
-    )
+    logger.deprecate('"environmentMatchGlobs" is deprecated. Use `test.projects` to define different configurations instead.')
   }
   resolved.environmentMatchGlobs = (resolved.environmentMatchGlobs || []).map(
     i => [resolve(resolved.root, i[0]), i[1]],

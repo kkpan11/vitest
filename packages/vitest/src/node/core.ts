@@ -431,7 +431,7 @@ export class Vitest {
     if (this.config.projects) {
       if (typeof this.config.workspace !== 'undefined') {
         this.logger.warn(
-          'Both `config.projects` and `config.workspace` are defined. Ignoring the `workspace` option.',
+          'Both `test.projects` and `test.workspace` are defined. Ignoring the `test.workspace` option.',
         )
       }
 
@@ -446,7 +446,7 @@ export class Vitest {
 
     if (Array.isArray(this.config.workspace)) {
       this.logger.deprecate(
-        'The `workspace` option is deprecated and will be removed in the next major. To hide this warning, rename `workspace` option to `projects`.',
+        'The `test.workspace` option is deprecated and will be removed in the next major. To hide this warning, rename `test.workspace` option to `test.projects`.',
       )
       return resolveProjects(
         this,
@@ -477,7 +477,7 @@ export class Vitest {
       : 'the root config file'
 
     this.logger.deprecate(
-      `The workspace file is deprecated and will be removed in the next major. Please, use the \`projects\` field in ${configFile} instead.`,
+      `The workspace file is deprecated and will be removed in the next major. Please, use the \`test.projects\` field in ${configFile} instead.`,
     )
 
     const workspaceModule = await this.import<{
@@ -546,10 +546,6 @@ export class Vitest {
 
     for (const file of files) {
       await this._reportFileTask(file)
-    }
-
-    if (hasFailed(files)) {
-      process.exitCode = 1
     }
 
     this._checkUnhandledErrors(errors)
@@ -632,22 +628,14 @@ export class Vitest {
 
     // if run with --changed, don't exit if no tests are found
     if (!files.length) {
-      const throwAnError = !this.config.watch || !(this.config.changed || this.config.related?.length)
-
       await this._testRun.start([])
       const coverage = await this.coverageProvider?.generateCoverage?.({ allTestsRun: true })
-
-      // set exit code before calling `onTestRunEnd` so the lifecycle is consistent
-      if (throwAnError) {
-        const exitCode = this.config.passWithNoTests ? 0 : 1
-        process.exitCode = exitCode
-      }
 
       await this._testRun.end([], [], coverage)
       // Report coverage for uncovered files
       await this.reportCoverage(coverage, true)
 
-      if (throwAnError) {
+      if (!this.config.watch || !(this.config.changed || this.config.related?.length)) {
         throw new FilesNotFoundError(this.mode)
       }
     }
@@ -783,10 +771,6 @@ export class Vitest {
         }
 
         const files = this.state.getFiles()
-
-        if (hasFailed(files)) {
-          process.exitCode = 1
-        }
 
         this.cache.results.updateResults(files)
         try {
